@@ -45,6 +45,9 @@ func GetKubeResource(resourceData *schema.ResourceData) *KubeResource {
 }
 
 func (resourceId *KubeResourceId) GetCollectionPath() string {
+    if resourceId.collection == "namespaces" {
+        return "namespaces"
+    }
     return fmt.Sprintf("namespaces/%s/%s", resourceId.namespace, resourceId.collection)
 }
 
