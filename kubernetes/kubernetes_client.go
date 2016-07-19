@@ -154,7 +154,7 @@ func dumpError(action string, content []byte, response *http.Response, err error
 
     defer file.Close()
 
-    fmt.Fprintf(file, "Failed to %s: %v\n\n", action, err)
+    fmt.Fprintf(file, "%s\n\nFailed to %s: %v\n\n", time.Now().String(), action, err)
 
     if content != nil {
         fmt.Fprintf(file, "=============\n")
