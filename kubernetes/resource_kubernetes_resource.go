@@ -44,7 +44,7 @@ func updateKubernetesResource(resourceData *schema.ResourceData, _ interface{}) 
         return err
     }
 
-    if err := kubeClient.Patch(GetKubeResource(resourceData)); err != nil {
+    if err := kubeClient.Update(GetKubeResource(resourceData)); err != nil {
         return err
     }
 

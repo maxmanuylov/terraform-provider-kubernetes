@@ -6,7 +6,10 @@ import (
     "github.com/hashicorp/terraform/helper/schema"
 )
 
-const namespacesCollection = "namespaces"
+const (
+    namespacesCollection = "namespaces"
+    defaultNamespace = "default"
+)
 
 type CustomMap map[string]interface{}
 
@@ -31,7 +34,7 @@ type KubeResource struct {
 func GetKubeResourceId(resourceData *schema.ResourceData) *KubeResourceId {
     resourceNamespace := resourceData.Get("namespace").(string)
     if resourceNamespace == "" {
-        resourceNamespace = "default"
+        resourceNamespace = defaultNamespace
     }
 
     return &KubeResourceId{
@@ -55,6 +58,10 @@ func (resourceId *KubeResourceId) IsNamespace() bool {
     return resourceId.collection == namespacesCollection
 }
 
+func (resourceId *KubeResourceId) CannotBeDeleted() bool {
+    return resourceId.IsNamespace() && (resourceId.name == defaultNamespace || resourceId.name == "kube-system")
+}
+
 func (resourceId *KubeResourceId) GetCollectionPath() string {
     if resourceId.IsNamespace() {
         return namespacesCollection
@@ -66,24 +73,19 @@ func (resourceId *KubeResourceId) GetResourcePath() string {
     return fmt.Sprintf("%s/%s", resourceId.GetCollectionPath(), resourceId.name)
 }
 
-func (resource *KubeResource) PrepareContent(includeNameData bool) []byte {
+func (resource *KubeResource) PrepareContent() []byte {
     var buf bytes.Buffer
 
-    if includeNameData || len(resource.labels) != 0 || len(resource.annotations) != 0 {
-        buf.WriteString("metadata:\n")
+    buf.WriteString("metadata:\n")
+    buf.WriteString("  name: \"")
+    buf.WriteString(resource.name)
+
+    if !resource.IsNamespace() {
+        buf.WriteString("\"\n  namespace: \"")
+        buf.WriteString(resource.namespace)
     }
 
-    if includeNameData {
-        buf.WriteString("  name: \"")
-        buf.WriteString(resource.name)
-
-        if !resource.IsNamespace() {
-            buf.WriteString("\"\n  namespace: \"")
-            buf.WriteString(resource.namespace)
-        }
-
-        buf.WriteString("\"\n")
-    }
+    buf.WriteString("\"\n")
 
     if len(resource.labels) != 0 {
         writeMap(&buf, "labels", resource.labels)

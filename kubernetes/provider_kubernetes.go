@@ -25,6 +25,7 @@ func Provider() terraform.ResourceProvider {
                     "ca_cert": {
                         Type: schema.TypeString,
                         Optional: true,
+                        ForceNew: true,
                     },
                     "client_cert": {
                         Type: schema.TypeString,

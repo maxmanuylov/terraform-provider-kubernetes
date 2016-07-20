@@ -11,6 +11,7 @@ import (
 )
 
 var ErrNotFound = clientError("404 Not Found")
+var ErrConflict = clientError("409 Conflict")
 
 type KubeClient struct {
     apiUrl     string
@@ -30,12 +31,16 @@ func (client *KubeClient) WaitForAPIServer() error {
 }
 
 func (client *KubeClient) Create(resource *KubeResource) error {
-    content := resource.PrepareContent(true)
+    content := resource.PrepareContent()
     path := resource.GetCollectionPath()
 
     response, err := retry(func() (*http.Response, error) {
         return client.do("POST", path, bytes.NewReader(content))
     })
+
+    if err == ErrConflict { // resource already exists
+        return client.doUpdate(resource, content)
+    }
 
     if err != nil {
         dumpError(fmt.Sprintf("create %q", resource.GetResourcePath()), content, response, err)
@@ -44,12 +49,15 @@ func (client *KubeClient) Create(resource *KubeResource) error {
     return err
 }
 
-func (client *KubeClient) Patch(resource *KubeResource) error {
-    content := resource.PrepareContent(false)
+func (client *KubeClient) Update(resource *KubeResource) error {
+    return client.doUpdate(resource, resource.PrepareContent())
+}
+
+func (client *KubeClient) doUpdate(resource *KubeResource, content []byte) error {
     path := resource.GetResourcePath()
 
     response, err := retry(func() (*http.Response, error) {
-        return client.do("PATCH", path, bytes.NewReader(content))
+        return client.do("PUT", path, bytes.NewReader(content))
     })
 
     if err != nil {
@@ -74,6 +82,10 @@ func (client *KubeClient) Exists(resourceId *KubeResourceId) (bool, error) {
 }
 
 func (client *KubeClient) Delete(resourceId *KubeResourceId) error {
+    if resourceId.CannotBeDeleted() {
+        return nil
+    }
+
     path := resourceId.GetResourcePath()
 
     response, err := retry(func() (*http.Response, error) {
@@ -132,6 +144,9 @@ func try(do func() (*http.Response, error)) (bool, *http.Response, error) {
     if responseKind == 4 {
         if response.StatusCode == 404 {
             return true, response, ErrNotFound
+        }
+        if response.StatusCode == 409 {
+            return true, response, ErrConflict
         }
         if response.StatusCode == 403 { // Illegal Kubernetes state, need to retry
             return false, response, clientError(response.Status)
