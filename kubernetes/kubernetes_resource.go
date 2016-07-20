@@ -6,6 +6,8 @@ import (
     "github.com/hashicorp/terraform/helper/schema"
 )
 
+const namespacesCollection = "namespaces"
+
 type CustomMap map[string]interface{}
 
 func toCustomMap(m interface{}) CustomMap {
@@ -49,11 +51,15 @@ func GetKubeResource(resourceData *schema.ResourceData) *KubeResource {
     }
 }
 
+func (resourceId *KubeResourceId) IsNamespace() bool {
+    return resourceId.collection == namespacesCollection
+}
+
 func (resourceId *KubeResourceId) GetCollectionPath() string {
-    if resourceId.collection == "namespaces" {
-        return "namespaces"
+    if resourceId.IsNamespace() {
+        return namespacesCollection
     }
-    return fmt.Sprintf("namespaces/%s/%s", resourceId.namespace, resourceId.collection)
+    return fmt.Sprintf("%s/%s/%s", namespacesCollection, resourceId.namespace, resourceId.collection)
 }
 
 func (resourceId *KubeResourceId) GetResourcePath() string {
@@ -70,8 +76,12 @@ func (resource *KubeResource) PrepareContent(includeNameData bool) []byte {
     if includeNameData {
         buf.WriteString("  name: \"")
         buf.WriteString(resource.name)
-        buf.WriteString("\"\n  namespace: \"")
-        buf.WriteString(resource.namespace)
+
+        if !resource.IsNamespace() {
+            buf.WriteString("\"\n  namespace: \"")
+            buf.WriteString(resource.namespace)
+        }
+
         buf.WriteString("\"\n")
     }
 
