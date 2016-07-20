@@ -55,7 +55,7 @@ func Provider() terraform.ResourceProvider {
                     },
                     "namespace": {
                         Type: schema.TypeString,
-                        Required: true,
+                        Optional: true,
                         ForceNew: true,
                     },
                     "collection": {

@@ -27,8 +27,13 @@ type KubeResource struct {
 }
 
 func GetKubeResourceId(resourceData *schema.ResourceData) *KubeResourceId {
+    resourceNamespace := resourceData.Get("namespace").(string)
+    if resourceNamespace == "" {
+        resourceNamespace = "default"
+    }
+
     return &KubeResourceId{
-        namespace: resourceData.Get("namespace").(string),
+        namespace: resourceNamespace,
         collection: resourceData.Get("collection").(string),
         name: resourceData.Get("name").(string),
     }
