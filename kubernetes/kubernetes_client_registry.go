@@ -8,6 +8,7 @@ import (
     "github.com/hashicorp/terraform/helper/schema"
     "net/http"
     "strings"
+    "time"
 )
 
 var registry = make(map[string]*KubeClient)
@@ -72,6 +73,7 @@ func newKubeClient(clusterData *schema.ResourceData) (*KubeClient, error) {
         apiUrl: fmt.Sprintf("%s/api/%s", strings.TrimSuffix(apiServer, "/"), apiVersion),
         httpClient: &http.Client{
             Transport: transport,
+            Timeout: 10 * time.Second,
         },
     }, nil
 }

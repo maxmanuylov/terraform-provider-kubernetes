@@ -19,12 +19,10 @@ type KubeClient struct {
 }
 
 func (client *KubeClient) WaitForAPIServer() error {
-    response, err := retry(func() (*http.Response, error) {
-        return client.do("GET", "", nil)
-    })
+    response, err := client.retryLong("GET", "", nil)
 
     if err != nil {
-        dumpError("connect to Kubernetes API server", nil, response, err)
+        dumpErrorToFile("connect to Kubernetes API server", nil, response, err)
     }
 
     return err
@@ -32,18 +30,15 @@ func (client *KubeClient) WaitForAPIServer() error {
 
 func (client *KubeClient) Create(resource *KubeResource) error {
     content := resource.PrepareContent()
-    path := resource.GetCollectionPath()
 
-    response, err := retry(func() (*http.Response, error) {
-        return client.do("POST", path, bytes.NewReader(content))
-    })
+    response, err := client.retryLong("POST", resource.GetCollectionPath(), content)
 
     if err == ErrConflict { // resource already exists
         return client.doUpdate(resource, content)
     }
 
     if err != nil {
-        dumpError(fmt.Sprintf("create %q", resource.GetResourcePath()), content, response, err)
+        dumpErrorToFile(fmt.Sprintf("create %q", resource.GetResourcePath()), content, response, err)
     }
 
     return err
@@ -56,29 +51,23 @@ func (client *KubeClient) Update(resource *KubeResource) error {
 func (client *KubeClient) doUpdate(resource *KubeResource, content []byte) error {
     path := resource.GetResourcePath()
 
-    response, err := retry(func() (*http.Response, error) {
-        return client.do("PUT", path, bytes.NewReader(content))
-    })
+    response, err := client.retryLong("PUT", path, content)
 
     if err != nil {
-        dumpError(fmt.Sprintf("update %q", resource.GetResourcePath()), content, response, err)
+        dumpErrorToFile(fmt.Sprintf("update %q", path), content, response, err)
     }
 
     return err
 }
 
 func (client *KubeClient) Exists(resourceId *KubeResourceId) (bool, error) {
-    path := resourceId.GetResourcePath()
-
-    response, err := retry(func() (*http.Response, error) {
-        return client.do("GET", path, nil)
-    })
+    response, err := client.retryShort("GET", resourceId.GetResourcePath(), nil)
 
     if err == ErrNotFound {
         return false, nil
     }
 
-    return err == nil && response.StatusCode / 100 == 2, err
+    return err == nil && response.StatusCode / 100 == 2, nil
 }
 
 func (client *KubeClient) Delete(resourceId *KubeResourceId) error {
@@ -88,49 +77,52 @@ func (client *KubeClient) Delete(resourceId *KubeResourceId) error {
 
     path := resourceId.GetResourcePath()
 
-    response, err := retry(func() (*http.Response, error) {
-        return client.do("DELETE", path, nil)
-    })
+    response, err := client.retryShort("DELETE", path, nil)
 
     if err == ErrNotFound {
         return nil
     }
 
     if err != nil {
-        dumpError(fmt.Sprintf("delete %q", resourceId.GetResourcePath()), nil, response, err)
+        dumpErrorToFile(fmt.Sprintf("delete %q", path), nil, response, err)
     }
 
     return err
 }
 
-func (client *KubeClient) do(method, path string, body io.Reader) (*http.Response, error) {
-    url := fmt.Sprintf("%s/%s", strings.TrimSuffix(client.apiUrl, "/"), path)
-
-    request, err := http.NewRequest(method, url, body)
-    if err != nil {
-        return nil, err
-    }
-
-    request.Header.Add("Content-Type", "application/yaml")
-    request.Header.Add("Accept", "application/yaml")
-    request.Header.Add("User-Agent", "curl/7.43.0")
-
-    return client.httpClient.Do(request)
+func (client *KubeClient) retryLong(method, path string, content []byte) (*http.Response, error) {
+    return client.retry(200, method, path, content) // 10 minutes
 }
 
-func retry(do func() (*http.Response, error)) (response *http.Response, err error) {
+func (client *KubeClient) retryShort(method, path string, content []byte) (*http.Response, error) {
+    return client.retry(3, method, path, content) // 3 times
+}
+
+func (client *KubeClient) retry(n int, method, path string, content []byte) (response *http.Response, err error) {
     var done bool
-    for i := 0; i < 200; i++ { // 10 minutes
-        if done, response, err = try(do); done {
+    for i := 0; i < n; i++ {
+        if i != 0 {
+            time.Sleep(3 * time.Second)
+        }
+
+        if done, response, err = client.try(method, path, content); done {
             return
         }
-        time.Sleep(3 * time.Second)
+
+        if err != nil {
+            dumpError(os.Stderr, fmt.Sprintf("%s \"%s\"", method, path), content, response, err)
+        }
     }
     return
 }
 
-func try(do func() (*http.Response, error)) (bool, *http.Response, error) {
-    response, err := do()
+func (client *KubeClient) try(method, path string, content []byte) (bool, *http.Response, error) {
+    var contentReader io.Reader
+    if content != nil {
+        contentReader = bytes.NewReader(content)
+    }
+
+    response, err := client.do(method, path, contentReader)
     if err != nil {
         return false, nil, err
     }
@@ -157,47 +149,65 @@ func try(do func() (*http.Response, error)) (bool, *http.Response, error) {
     return false, response, fmt.Errorf("Server error: %s", response.Status)
 }
 
+func (client *KubeClient) do(method, path string, body io.Reader) (*http.Response, error) {
+    url := fmt.Sprintf("%s/%s", strings.TrimSuffix(client.apiUrl, "/"), path)
+
+    request, err := http.NewRequest(method, url, body)
+    if err != nil {
+        return nil, err
+    }
+
+    request.Header.Add("Content-Type", "application/yaml")
+    request.Header.Add("Accept", "application/yaml")
+    request.Header.Add("User-Agent", "curl/7.43.0")
+
+    return client.httpClient.Do(request)
+}
+
 func clientError(status string) error {
     return fmt.Errorf("Client error: %s", status)
 }
 
-func dumpError(action string, content []byte, response *http.Response, err error) {
+func dumpErrorToFile(action string, content []byte, response *http.Response, err error) {
     file, err2 := os.Create("kubernetes-error.log")
     if err2 != nil {
         return
     }
 
     defer file.Close()
+    defer file.Sync()
 
-    fmt.Fprintf(file, "%s\n\nFailed to %s: %v\n\n", time.Now().String(), action, err)
+    fmt.Fprintf(file, "%s\n\n", time.Now().String())
+
+    dumpError(file, action, content, response, err)
+}
+
+func dumpError(writer io.Writer, action string, content []byte, response *http.Response, err error) {
+    fmt.Fprintf(writer, "Failed to %s: %v\n\n", action, err)
 
     if content != nil {
-        fmt.Fprintf(file, "=============\n")
-        fmt.Fprintf(file, "== Content ==\n")
-        fmt.Fprintf(file, "=============\n")
-        fmt.Fprintf(file, "\n%s\n\n", content)
+        fmt.Fprintln(writer, "=============")
+        fmt.Fprintln(writer, "== Content ==")
+        fmt.Fprintln(writer, "=============")
+        fmt.Fprintf(writer, "\n%s\n\n", content)
     }
 
     if response != nil {
-        fmt.Fprintf(file, "==============\n")
-        fmt.Fprintf(file, "== Response ==\n")
-        fmt.Fprintf(file, "==============\n")
-        fmt.Fprintf(file, "\n%s\n", response.Status)
+        fmt.Fprintln(writer, "==============")
+        fmt.Fprintln(writer, "== Response ==")
+        fmt.Fprintln(writer, "==============")
+        fmt.Fprintf(writer, "\n%s\n", response.Status)
 
         if response.Header != nil {
             for key, values := range response.Header {
                 for _, value := range values {
-                    fmt.Fprintf(file, "%s: %s\n", key, value)
+                    fmt.Fprintf(writer, "%s: %s\n", key, value)
                 }
             }
         }
 
-        fmt.Fprintf(file, "\n")
-        io.Copy(file, response.Body)
-        fmt.Fprintf(file, "\n")
-    }
-
-    if err = file.Sync(); err != nil {
-        return
+        fmt.Fprintln(writer)
+        io.Copy(writer, response.Body)
+        fmt.Fprintln(writer)
     }
 }
