@@ -77,6 +77,13 @@ func Provider() terraform.ResourceProvider {
                         Type: schema.TypeMap,
                         Optional: true,
                     },
+                    "wait_for": {
+                        Type: schema.TypeList,
+                        Optional: true,
+                        Elem: &schema.Schema{
+                            Type: schema.TypeString,
+                        },
+                    },
                     "content": {
                         Type: schema.TypeString,
                         Required: true,

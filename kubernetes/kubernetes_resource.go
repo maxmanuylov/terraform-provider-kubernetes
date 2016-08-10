@@ -29,6 +29,7 @@ type KubeResource struct {
 
     labels      CustomMap
     annotations CustomMap
+    waitFor     []interface{}
     content     string
 }
 
@@ -51,6 +52,7 @@ func GetKubeResource(resourceData *schema.ResourceData) *KubeResource {
 
         labels: toCustomMap(resourceData.Get("labels")),
         annotations: toCustomMap(resourceData.Get("annotations")),
+        waitFor: resourceData.Get("wait_for").([]interface{}),
         content: resourceData.Get("content").(string),
     }
 }
@@ -77,6 +79,14 @@ func (resourceId *KubeResourceId) GetCollection(restClient *rest_client.Client) 
 
 func (resourceId *KubeResourceId) Describe() string {
     return fmt.Sprintf("%s/%s/%s", resourceId.namespace, resourceId.collection, resourceId.name)
+}
+
+func (resource *KubeResource) GetWaitFor() []string {
+    waitFor := make([]string, len(resource.waitFor))
+    for i, wf := range resource.waitFor {
+        waitFor[i] = wf.(string)
+    }
+    return waitFor
 }
 
 func (resource *KubeResource) PrepareContent() []byte {
