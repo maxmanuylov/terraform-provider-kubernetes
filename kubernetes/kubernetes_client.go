@@ -96,7 +96,7 @@ type items struct {
     Items []struct{ Metadata struct{ Name string } }
 }
 
-func waitForCollection(path string, collection rest_client.CollectionClient) error {
+func waitForCollection(path string, collection rest_client.Collection) error {
     return retryLong(fmt.Sprintf("wait for \"%s\"", path), nil, func() error {
         items := &items{}
         if err := collection.List(items); err != nil {
@@ -112,7 +112,7 @@ func waitForCollection(path string, collection rest_client.CollectionClient) err
     }).error
 }
 
-func waitForResource(path string, collection rest_client.CollectionClient, resourceId string) error {
+func waitForResource(path string, collection rest_client.Collection, resourceId string) error {
     return retryLong(fmt.Sprintf("wait for \"%s\"", path), nil, func() error {
         _, err := collection.GetYaml(resourceId)
         if isNotFoundError(err) {

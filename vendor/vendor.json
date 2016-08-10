@@ -783,10 +783,10 @@
 			"revisionTime": "2016-08-06T12:27:52Z"
 		},
 		{
-			"checksumSHA1": "ZqZoaRBLUiEK+zIYhgh87tFh6q8=",
+			"checksumSHA1": "3OKdF5UEfVR1f3uz97U9oHj+Nq8=",
 			"path": "github.com/maxmanuylov/go-rest/client",
-			"revision": "7d3fd25d684faaf022f2e9d6e49a4fffcb4b4905",
-			"revisionTime": "2016-08-10T12:41:44Z"
+			"revision": "44224fc2494673d0f743663ee802134f73cf966f",
+			"revisionTime": "2016-08-10T15:15:58Z"
 		},
 		{
 			"checksumSHA1": "uybqIvsF9mb+9Blo5VvjYyCRMtQ=",

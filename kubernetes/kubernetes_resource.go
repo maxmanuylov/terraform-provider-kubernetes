@@ -69,7 +69,7 @@ func (resourceId *KubeResourceId) CannotBeDeleted() bool {
     return resourceId.IsNamespace() && (resourceId.name == defaultNamespace || resourceId.name == "kube-system")
 }
 
-func (resourceId *KubeResourceId) GetCollection(restClient *rest_client.Client) rest_client.CollectionClient {
+func (resourceId *KubeResourceId) GetCollection(restClient *rest_client.Client) rest_client.Collection {
     collection := restClient.Collection(namespacesCollection)
     if !resourceId.IsNamespace() {
         collection = collection.SubCollection(resourceId.namespace, resourceId.collection)
