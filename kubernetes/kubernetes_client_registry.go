@@ -6,6 +6,7 @@ import (
     "errors"
     "fmt"
     "github.com/hashicorp/terraform/helper/schema"
+    "github.com/maxmanuylov/go-rest/client"
     "net/http"
     "strings"
     "time"
@@ -70,11 +71,13 @@ func newKubeClient(clusterData *schema.ResourceData) (*KubeClient, error) {
     }
 
     return &KubeClient{
-        apiUrl: fmt.Sprintf("%s/api/%s", strings.TrimSuffix(apiServer, "/"), apiVersion),
-        httpClient: &http.Client{
-            Transport: transport,
-            Timeout: 10 * time.Second,
-        },
+        restClient: rest_client.New(
+            fmt.Sprintf("%s/api/%s", strings.TrimSuffix(apiServer, "/"), apiVersion),
+            &http.Client{
+                Transport: transport,
+                Timeout: 10 * time.Second,
+            },
+        ),
     }, nil
 }
 

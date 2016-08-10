@@ -4,6 +4,7 @@ import (
     "bytes"
     "fmt"
     "github.com/hashicorp/terraform/helper/schema"
+    "github.com/maxmanuylov/go-rest/client"
 )
 
 const (
@@ -54,6 +55,10 @@ func GetKubeResource(resourceData *schema.ResourceData) *KubeResource {
     }
 }
 
+func (resourceId *KubeResourceId) Name() string {
+    return resourceId.name
+}
+
 func (resourceId *KubeResourceId) IsNamespace() bool {
     return resourceId.collection == namespacesCollection
 }
@@ -62,15 +67,16 @@ func (resourceId *KubeResourceId) CannotBeDeleted() bool {
     return resourceId.IsNamespace() && (resourceId.name == defaultNamespace || resourceId.name == "kube-system")
 }
 
-func (resourceId *KubeResourceId) GetCollectionPath() string {
-    if resourceId.IsNamespace() {
-        return namespacesCollection
+func (resourceId *KubeResourceId) GetCollection(restClient *rest_client.Client) rest_client.CollectionClient {
+    collection := restClient.Collection(namespacesCollection)
+    if !resourceId.IsNamespace() {
+        collection = collection.SubCollection(resourceId.namespace, resourceId.collection)
     }
-    return fmt.Sprintf("%s/%s/%s", namespacesCollection, resourceId.namespace, resourceId.collection)
+    return collection
 }
 
-func (resourceId *KubeResourceId) GetResourcePath() string {
-    return fmt.Sprintf("%s/%s", resourceId.GetCollectionPath(), resourceId.name)
+func (resourceId *KubeResourceId) Describe() string {
+    return fmt.Sprintf("%s/%s/%s", resourceId.namespace, resourceId.collection, resourceId.name)
 }
 
 func (resource *KubeResource) PrepareContent() []byte {
