@@ -803,6 +803,12 @@
 			"versionExact": "terraform-v0.6.16"
 		},
 		{
+			"checksumSHA1": "5m9Nma7UIokPIff6M0IXWbY8Rq4=",
+			"path": "github.com/maxmanuylov/utils/tls/transport",
+			"revision": "7e0ca4db044b3e096bd7a8dd149dff18e315ccfa",
+			"revisionTime": "2016-08-25T00:31:29Z"
+		},
+		{
 			"checksumSHA1": "yF39M9MGatDbq2d2oqlLy44jsRc=",
 			"path": "github.com/mitchellh/cli",
 			"revision": "168daae10d6ff81b8b1201b0a4c9607d7e9b82e3",

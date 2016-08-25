@@ -1,12 +1,11 @@
 package kubernetes
 
 import (
-    "crypto/tls"
-    "crypto/x509"
     "errors"
     "fmt"
     "github.com/hashicorp/terraform/helper/schema"
     "github.com/maxmanuylov/go-rest/client"
+    "github.com/maxmanuylov/utils/tls/transport"
     "net/http"
     "strings"
     "time"
@@ -59,15 +58,13 @@ func newKubeClient(clusterData *schema.ResourceData) (*KubeClient, error) {
     clientCert := clusterData.Get("client_cert").(string)
     clientKey := clusterData.Get("client_key").(string)
 
-    transport := http.DefaultTransport.(*http.Transport)
-
-    tlsConfig, err := newTLSConfig(caCert, clientCert, clientKey)
-    if err != nil {
-        return nil, err
-    }
-
-    if tlsConfig != nil {
-        transport.TLSClientConfig = tlsConfig
+    transport := http.DefaultTransport
+    if caCert != "" && clientCert != "" && clientKey != "" {
+        var err error
+        transport, err = tls_transport.New([]byte(caCert), []byte(clientCert), []byte(clientKey))
+        if err != nil {
+            return nil, err
+        }
     }
 
     return &KubeClient{
@@ -78,26 +75,5 @@ func newKubeClient(clusterData *schema.ResourceData) (*KubeClient, error) {
                 Timeout: 10 * time.Second,
             },
         ),
-    }, nil
-}
-
-func newTLSConfig(caCert, clientCert, clientKey string) (*tls.Config, error) {
-    if caCert == "" || clientCert == "" || clientKey == "" {
-        return nil, nil
-    }
-
-    caPool := x509.NewCertPool()
-    if !caPool.AppendCertsFromPEM([]byte(caCert)) {
-        return nil, errors.New("No CA certificate found")
-    }
-
-    certificate, err := tls.X509KeyPair([]byte(clientCert), []byte(clientKey))
-    if err != nil {
-        return nil, err
-    }
-
-    return &tls.Config{
-        Certificates: []tls.Certificate{certificate},
-        RootCAs: caPool,
     }, nil
 }
