@@ -5,6 +5,7 @@ import (
     "fmt"
     "github.com/hashicorp/terraform/helper/schema"
     "github.com/maxmanuylov/go-rest/client"
+    "strings"
 )
 
 const (
@@ -19,6 +20,7 @@ func toCustomMap(m interface{}) CustomMap {
 }
 
 type KubeResourceId struct {
+    apiPath    string
     namespace  string
     collection string
     name       string
@@ -39,7 +41,13 @@ func GetKubeResourceId(resourceData *schema.ResourceData) *KubeResourceId {
         resourceNamespace = defaultNamespace
     }
 
+    resourceApiPath := strings.Trim(resourceData.Get("api_path").(string), "/")
+    if resourceApiPath == "" {
+        resourceApiPath = "api/v1"
+    }
+
     return &KubeResourceId{
+        apiPath: resourceApiPath,
         namespace: resourceNamespace,
         collection: resourceData.Get("collection").(string),
         name: resourceData.Get("name").(string),
@@ -57,6 +65,10 @@ func GetKubeResource(resourceData *schema.ResourceData) *KubeResource {
     }
 }
 
+func (resourceId *KubeResourceId) ApiPath() string {
+    return resourceId.apiPath
+}
+
 func (resourceId *KubeResourceId) Name() string {
     return resourceId.name
 }
@@ -70,7 +82,7 @@ func (resourceId *KubeResourceId) CannotBeDeleted() bool {
 }
 
 func (resourceId *KubeResourceId) GetCollection(restClient *rest_client.Client) rest_client.Collection {
-    collection := restClient.Collection(namespacesCollection)
+    collection := restClient.Collection(fmt.Sprintf("%s/%s", resourceId.apiPath, namespacesCollection))
     if !resourceId.IsNamespace() {
         collection = collection.SubCollection(resourceId.namespace, resourceId.collection)
     }
@@ -78,7 +90,7 @@ func (resourceId *KubeResourceId) GetCollection(restClient *rest_client.Client) 
 }
 
 func (resourceId *KubeResourceId) Describe() string {
-    return fmt.Sprintf("%s/%s/%s", resourceId.namespace, resourceId.collection, resourceId.name)
+    return fmt.Sprintf("%s/%s/%s/%s", resourceId.apiPath, resourceId.namespace, resourceId.collection, resourceId.name)
 }
 
 func (resource *KubeResource) GetWaitFor() []string {

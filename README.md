@@ -12,9 +12,6 @@ resource "kubernetes_cluster" "main" {
   # Required, both HTTP and HTTPS are supported
   api_server = "https://192.168.0.1:6443"
 
-  # Optional, default is "v1"
-  api_version = "v1"
-
   # TLS options are optional, see "tls" Terraform provider (built-in) for certificates/keys generating
   ca_cert = "<CA certificate content (PEM)>"
   client_cert = "<client certificate content (PEM)>"
@@ -24,6 +21,9 @@ resource "kubernetes_cluster" "main" {
 resource "kubernetes_resource" "mypod" {
   # Required, must link on the corresponding "kubernetes_cluster" resource
   cluster = "${kubernetes_cluster.main.cluster}"
+
+  # Optional, default is "api/v1"
+  api_path = "api/v1"
 
   # Optional, default is "default"
   namespace = "default"

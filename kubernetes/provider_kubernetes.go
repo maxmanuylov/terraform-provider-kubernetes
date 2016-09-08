@@ -18,10 +18,6 @@ func Provider() terraform.ResourceProvider {
                         Required: true,
                         ForceNew: true,
                     },
-                    "api_version": {
-                        Type: schema.TypeString,
-                        Optional: true,
-                    },
                     "ca_cert": {
                         Type: schema.TypeString,
                         Optional: true,
@@ -53,6 +49,10 @@ func Provider() terraform.ResourceProvider {
                         Type: schema.TypeString,
                         Required: true,
                         ForceNew: true,
+                    },
+                    "api_path": {
+                        Type: schema.TypeString,
+                        Optional: true,
                     },
                     "namespace": {
                         Type: schema.TypeString,

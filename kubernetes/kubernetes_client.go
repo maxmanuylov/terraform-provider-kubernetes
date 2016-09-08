@@ -27,7 +27,7 @@ func (client *KubeClient) WaitForAPIServer() error {
     action := "connect to Kubernetes API server"
 
     eh := retryLong(action, nil, func() error {
-        _, err := client.restClient.Do("GET", "", rest_client.Json, nil)
+        _, err := client.restClient.Do("GET", "api/v1", rest_client.Json, nil)
         return err
     })
 
@@ -71,7 +71,7 @@ func (client *KubeClient) waitFor(resource *KubeResource) (err error) {
             continue
         }
 
-        collection := client.restClient.Collection(fields[0])
+        collection := client.restClient.Collection(fmt.Sprintf("%s/%s", resource.ApiPath(), fields[0]))
         fields = fields[1:]
 
         for len(fields) > 1 {

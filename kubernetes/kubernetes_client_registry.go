@@ -2,7 +2,6 @@ package kubernetes
 
 import (
     "errors"
-    "fmt"
     "github.com/hashicorp/terraform/helper/schema"
     "github.com/maxmanuylov/go-rest/client"
     "github.com/maxmanuylov/utils/tls/transport"
@@ -49,11 +48,6 @@ func doGetOrCreateKubeClient(clusterKey string, factory func() (*KubeClient, err
 func newKubeClient(clusterData *schema.ResourceData) (*KubeClient, error) {
     apiServer := clusterData.Get("api_server").(string)
 
-    apiVersion := clusterData.Get("api_version").(string)
-    if apiVersion == "" {
-        apiVersion = "v1"
-    }
-
     caCert := clusterData.Get("ca_cert").(string)
     clientCert := clusterData.Get("client_cert").(string)
     clientKey := clusterData.Get("client_key").(string)
@@ -69,7 +63,7 @@ func newKubeClient(clusterData *schema.ResourceData) (*KubeClient, error) {
 
     return &KubeClient{
         restClient: rest_client.New(
-            fmt.Sprintf("%s/api/%s", strings.TrimSuffix(apiServer, "/"), apiVersion),
+            strings.TrimSuffix(apiServer, "/"),
             &http.Client{
                 Transport: transport,
                 Timeout: 10 * time.Second,
