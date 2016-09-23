@@ -801,18 +801,24 @@
 			"revisionTime": "2016-09-07T11:08:07Z"
 		},
 		{
+			"checksumSHA1": "pJ+0gZef7+sx4jsHmPvpUA/S4Wc=",
+			"path": "github.com/maxmanuylov/utils/http/transport",
+			"revision": "a6164ba416b040418573b1da6574ae4c9a662f16",
+			"revisionTime": "2016-09-23T15:58:36Z"
+		},
+		{
+			"checksumSHA1": "LPWoHtRUtvwWh7vAUvGFFout7Jc=",
+			"path": "github.com/maxmanuylov/utils/http/transport/tls",
+			"revision": "a6164ba416b040418573b1da6574ae4c9a662f16",
+			"revisionTime": "2016-09-23T15:58:36Z"
+		},
+		{
 			"checksumSHA1": "18rqgVpmFsyJcUnbGII2mOl9cgo=",
 			"path": "github.com/maxmanuylov/utils/intellij-hcl/terraform/provider-schema-generator",
 			"revision": "1f028e3ad883a266223597ecabacbb026f4f5dcf",
 			"revisionTime": "2016-06-27T14:49:21Z",
 			"version": "=terraform-v0.6.16",
 			"versionExact": "terraform-v0.6.16"
-		},
-		{
-			"checksumSHA1": "5m9Nma7UIokPIff6M0IXWbY8Rq4=",
-			"path": "github.com/maxmanuylov/utils/tls/transport",
-			"revision": "7e0ca4db044b3e096bd7a8dd149dff18e315ccfa",
-			"revisionTime": "2016-08-25T00:31:29Z"
 		},
 		{
 			"checksumSHA1": "7niW29CvYceZ6zbia6b/LT+yD/M=",

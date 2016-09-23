@@ -4,7 +4,7 @@ import (
     "errors"
     "github.com/hashicorp/terraform/helper/schema"
     "github.com/maxmanuylov/go-rest/client"
-    "github.com/maxmanuylov/utils/tls/transport"
+    "github.com/maxmanuylov/utils/http/transport/tls"
     "net/http"
     "strings"
     "time"
