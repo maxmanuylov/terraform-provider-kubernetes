@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TERRAFORM_VERSION="v0.6.16"
+TERRAFORM_VERSION="v0.8.2"
 
 rm -rf vendor
 
