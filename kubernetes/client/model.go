@@ -14,10 +14,10 @@ const (
     defaultNamespace = "default"
 )
 
-type CustomMap map[string]interface{}
+type customMap map[string]interface{}
 
-func toCustomMap(m interface{}) CustomMap {
-    return CustomMap(m.(map[string]interface{}))
+func toCustomMap(m interface{}) customMap {
+    return customMap(m.(map[string]interface{}))
 }
 
 type KubeResourceId struct {
@@ -30,9 +30,8 @@ type KubeResourceId struct {
 type KubeResource struct {
     KubeResourceId
 
-    labels      CustomMap
-    annotations CustomMap
-    waitFor     []interface{}
+    labels      customMap
+    annotations customMap
     content     string
 }
 
@@ -56,7 +55,6 @@ func GetKubeResource(resourceData *schema.ResourceData) *KubeResource {
 
         labels: toCustomMap(resourceData.Get("labels")),
         annotations: toCustomMap(resourceData.Get("annotations")),
-        waitFor: resourceData.Get("wait_for").([]interface{}),
         content: resourceData.Get("content").(string),
     }
 }
@@ -89,14 +87,6 @@ func (resourceId *KubeResourceId) Describe() string {
     return fmt.Sprintf("%s/%s/%s/%s", resourceId.apiPath, resourceId.namespace, resourceId.collection, resourceId.name)
 }
 
-func (resource *KubeResource) GetWaitFor() []string {
-    waitFor := make([]string, len(resource.waitFor))
-    for i, wf := range resource.waitFor {
-        waitFor[i] = wf.(string)
-    }
-    return waitFor
-}
-
 func (resource *KubeResource) PrepareContent() []byte {
     var buf bytes.Buffer
 
@@ -124,7 +114,7 @@ func (resource *KubeResource) PrepareContent() []byte {
     return buf.Bytes()
 }
 
-func writeMap(buffer *bytes.Buffer, label string, _map CustomMap) {
+func writeMap(buffer *bytes.Buffer, label string, _map customMap) {
     buffer.WriteString("  ")
     buffer.WriteString(label)
     buffer.WriteString(":\n")

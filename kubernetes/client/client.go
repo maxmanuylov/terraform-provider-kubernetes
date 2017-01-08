@@ -7,7 +7,6 @@ import (
     "io"
     "net/http"
     "os"
-    "strings"
     "time"
 )
 
@@ -63,74 +62,7 @@ func (client *KubeClient) Create(resource *KubeResource) error {
         return eh.error
     }
 
-    return client.waitFor(resource)
-}
-
-func (client *KubeClient) waitFor(resource *KubeResource) (err error) {
-    for _, path := range resource.GetWaitFor() {
-        fields := strings.FieldsFunc(path, func(r rune) bool { return r == '/' })
-        if len(fields) == 0 {
-            continue
-        }
-
-        collection := client.restClient.Collection(fmt.Sprintf("%s/%s", resource.ApiPath(), fields[0]))
-        fields = fields[1:]
-
-        for len(fields) > 1 {
-            collection = collection.SubCollection(fields[0], fields[1])
-            fields = fields[2:]
-        }
-
-        if len(fields) == 0 {
-            err = waitForCollection(path, collection)
-        } else {
-            err = waitForResource(path, collection, fields[0])
-        }
-
-        if err != nil {
-            return
-        }
-    }
-    return
-}
-
-type items struct {
-    Items []struct{ Metadata struct{ Name string } }
-}
-
-func waitForCollection(path string, collection rest_client.Collection) error {
-    return retryLong(fmt.Sprintf("wait for \"%s\"", path), nil, func() error {
-        items := &items{}
-        if err := collection.List(items); err != nil {
-            if isNotFoundError(err) {
-                return doesNotExistYetError(path)
-            }
-            return err
-        }
-        if len(items.Items) == 0 {
-            return doesNotExistYetError(path)
-        }
-        return nil
-    }).error
-}
-
-func waitForResource(path string, collection rest_client.Collection, resourceId string) error {
-    return retryLong(fmt.Sprintf("wait for \"%s\"", path), nil, func() error {
-        _, err := collection.GetYaml(resourceId)
-        if isNotFoundError(err) {
-            return doesNotExistYetError(path)
-        }
-        return err
-    }).error
-}
-
-func isNotFoundError(err error) bool {
-    restErr, ok := err.(*rest_error.Error)
-    return ok && restErr.Code == http.StatusNotFound
-}
-
-func doesNotExistYetError(path string) error {
-    return fmt.Errorf("\"%s\" does not exist yet", path)
+    return nil
 }
 
 func (client *KubeClient) Update(resource *KubeResource) error {
