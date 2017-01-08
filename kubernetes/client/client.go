@@ -1,4 +1,4 @@
-package kubernetes
+package kubernetes_client
 
 import (
     "fmt"
@@ -11,8 +11,10 @@ import (
     "time"
 )
 
-var ErrNotFound = rest_error.NewByCode(http.StatusNotFound)
-var ErrConflict = rest_error.NewByCode(http.StatusConflict)
+var (
+    ErrNotFound = rest_error.NewByCode(http.StatusNotFound)
+    ErrConflict = rest_error.NewByCode(http.StatusConflict)
+)
 
 type KubeClient struct {
     restClient *rest_client.Client

@@ -3,6 +3,7 @@ package kubernetes
 import (
     "github.com/hashicorp/go-uuid"
     "github.com/hashicorp/terraform/helper/schema"
+    "github.com/maxmanuylov/terraform-provider-kubernetes/kubernetes/client"
 )
 
 func createKubernetesCluster(clusterData *schema.ResourceData, _ interface{}) error {
@@ -11,7 +12,7 @@ func createKubernetesCluster(clusterData *schema.ResourceData, _ interface{}) er
         return err
     }
 
-    client, err := GetOrCreateKubeClient(id, clusterData)
+    client, err := kubernetes_client.GetOrCreateKubeClient(id, clusterData)
     if err != nil {
         return err
     }
@@ -27,12 +28,12 @@ func createKubernetesCluster(clusterData *schema.ResourceData, _ interface{}) er
 }
 
 func readKubernetesCluster(clusterData *schema.ResourceData, _ interface{}) error {
-    _, err := GetOrCreateKubeClient(clusterData.Id(), clusterData)
+    _, err := kubernetes_client.GetOrCreateKubeClient(clusterData.Id(), clusterData)
     return err
 }
 
 func updateKubernetesCluster(clusterData *schema.ResourceData, _ interface{}) error {
-    client, err := GetOrCreateKubeClient(clusterData.Id(), clusterData)
+    client, err := kubernetes_client.GetOrCreateKubeClient(clusterData.Id(), clusterData)
     if err != nil {
         return err
     }
@@ -45,7 +46,7 @@ func updateKubernetesCluster(clusterData *schema.ResourceData, _ interface{}) er
 }
 
 func deleteKubernetesCluster(clusterData *schema.ResourceData, _ interface{}) error {
-    DeleteKubeClient(clusterData.Id())
+    kubernetes_client.DeleteKubeClient(clusterData.Id())
 
     clusterData.SetId("")
     clusterData.Set("cluster", "")
@@ -54,6 +55,6 @@ func deleteKubernetesCluster(clusterData *schema.ResourceData, _ interface{}) er
 }
 
 func kubernetesClusterExists(clusterData *schema.ResourceData, _ interface{}) (bool, error) {
-    _, err := GetOrCreateKubeClient(clusterData.Id(), clusterData)
+    _, err := kubernetes_client.GetOrCreateKubeClient(clusterData.Id(), clusterData)
     return err == nil, err
 }

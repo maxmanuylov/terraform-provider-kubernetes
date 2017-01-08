@@ -3,10 +3,11 @@ package kubernetes
 import (
     "github.com/hashicorp/go-uuid"
     "github.com/hashicorp/terraform/helper/schema"
+    "github.com/maxmanuylov/terraform-provider-kubernetes/kubernetes/client"
 )
 
 func createKubernetesResource(resourceData *schema.ResourceData, _ interface{}) error {
-    kubeClient, err := GetKubeClient(resourceData)
+    kubeClient, err := kubernetes_client.GetKubeClient(resourceData)
     if err != nil {
         return err
     }
@@ -16,7 +17,7 @@ func createKubernetesResource(resourceData *schema.ResourceData, _ interface{}) 
         return err
     }
 
-    if err := kubeClient.Create(GetKubeResource(resourceData)); err != nil {
+    if err := kubeClient.Create(kubernetes_client.GetKubeResource(resourceData)); err != nil {
         return err
     }
 
@@ -39,12 +40,12 @@ func readKubernetesResource(resourceData *schema.ResourceData, meta interface{})
 }
 
 func updateKubernetesResource(resourceData *schema.ResourceData, _ interface{}) error {
-    kubeClient, err := GetKubeClient(resourceData)
+    kubeClient, err := kubernetes_client.GetKubeClient(resourceData)
     if err != nil {
         return err
     }
 
-    if err := kubeClient.Update(GetKubeResource(resourceData)); err != nil {
+    if err := kubeClient.Update(kubernetes_client.GetKubeResource(resourceData)); err != nil {
         return err
     }
 
@@ -52,12 +53,12 @@ func updateKubernetesResource(resourceData *schema.ResourceData, _ interface{}) 
 }
 
 func deleteKubernetesResource(resourceData *schema.ResourceData, _ interface{}) error {
-    kubeClient, err := GetKubeClient(resourceData)
+    kubeClient, err := kubernetes_client.GetKubeClient(resourceData)
     if err != nil {
         return err
     }
 
-    if err := kubeClient.Delete(GetKubeResourceId(resourceData)); err != nil {
+    if err := kubeClient.Delete(kubernetes_client.GetKubeResourceId(resourceData)); err != nil {
         return err
     }
 
@@ -67,10 +68,10 @@ func deleteKubernetesResource(resourceData *schema.ResourceData, _ interface{}) 
 }
 
 func kubernetesResourceExists(resourceData *schema.ResourceData, _ interface{}) (bool, error) {
-    kubeClient, err := GetKubeClient(resourceData)
+    kubeClient, err := kubernetes_client.GetKubeClient(resourceData)
     if err != nil {
         return false, err
     }
 
-    return kubeClient.Exists(GetKubeResourceId(resourceData))
+    return kubeClient.Exists(kubernetes_client.GetKubeResourceId(resourceData))
 }
