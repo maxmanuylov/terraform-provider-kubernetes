@@ -6,9 +6,12 @@ This is a plugin for HashiCorp [Terraform](https://terraform.io), which helps de
 
 - Download the plugin from [Releases](https://github.com/maxmanuylov/terraform-provider-kubernetes/releases) page.
 - [Install](https://terraform.io/docs/plugins/basics.html) it, or put into a directory with configuration files.
-- Create a sample configuration file `terraform.tf`:
+- Create a sample configuration file `example.tf`:
 ```
-resource "kubernetes_cluster" "main" {
+data "kubernetes_cluster" "main" {
+  # Optional, must be unique for every cluster data source
+  name = "default"
+
   # Required, both HTTP and HTTPS are supported
   api_server = "https://192.168.0.1:6443"
 
@@ -19,8 +22,8 @@ resource "kubernetes_cluster" "main" {
 }
 
 resource "kubernetes_resource" "mypod" {
-  # Required, must link on the corresponding "kubernetes_cluster" resource
-  cluster = "${kubernetes_cluster.main.cluster}"
+  # Required, must link on the corresponding "kubernetes_cluster" data source
+  cluster = "${data.kubernetes_cluster.main.cluster}"
 
   # Optional, default is "api/v1"
   api_path = "api/v1"
