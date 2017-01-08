@@ -22,18 +22,22 @@ func Provider() terraform.ResourceProvider {
                         Type: schema.TypeString,
                         Optional: true,
                         ForceNew: true,
+                        Sensitive: true,
                     },
                     "client_cert": {
                         Type: schema.TypeString,
                         Optional: true,
+                        Sensitive: true,
                     },
                     "client_key": {
                         Type: schema.TypeString,
                         Optional: true,
+                        Sensitive: true,
                     },
                     "cluster": {
                         Type: schema.TypeString,
                         Computed: true,
+                        Sensitive: true,
                     },
                 },
                 Create: createKubernetesCluster,
@@ -49,6 +53,7 @@ func Provider() terraform.ResourceProvider {
                         Type: schema.TypeString,
                         Required: true,
                         ForceNew: true,
+                        Sensitive: true,
                     },
                     "api_path": {
                         Type: schema.TypeString,
@@ -87,6 +92,7 @@ func Provider() terraform.ResourceProvider {
                     "content": {
                         Type: schema.TypeString,
                         Required: true,
+                        Sensitive: true,
                     },
                 },
                 Create: createKubernetesResource,
