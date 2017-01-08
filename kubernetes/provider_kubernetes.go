@@ -26,6 +26,7 @@ func Provider() terraform.ResourceProvider {
                     "namespace": {
                         Type: schema.TypeString,
                         Optional: true,
+                        Default: kubernetes_client.DefaultNamespace,
                         ForceNew: true,
                     },
                     "collection": {

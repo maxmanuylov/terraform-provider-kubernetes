@@ -10,8 +10,8 @@ import (
 
 const (
     DefaultApiPath = "api/v1"
+    DefaultNamespace = "default"
     namespacesCollection = "namespaces"
-    defaultNamespace = "default"
 )
 
 type customMap map[string]interface{}
@@ -36,14 +36,9 @@ type KubeResource struct {
 }
 
 func GetKubeResourceId(resourceData *schema.ResourceData) *KubeResourceId {
-    resourceNamespace := resourceData.Get("namespace").(string)
-    if resourceNamespace == "" {
-        resourceNamespace = defaultNamespace
-    }
-
     return &KubeResourceId{
         apiPath: strings.Trim(resourceData.Get("api_path").(string), "/"),
-        namespace: resourceNamespace,
+        namespace: resourceData.Get("namespace").(string),
         collection: resourceData.Get("collection").(string),
         name: resourceData.Get("name").(string),
     }
@@ -72,7 +67,7 @@ func (resourceId *KubeResourceId) IsNamespace() bool {
 }
 
 func (resourceId *KubeResourceId) CannotBeDeleted() bool {
-    return resourceId.IsNamespace() && (resourceId.name == defaultNamespace || resourceId.name == "kube-system")
+    return resourceId.IsNamespace() && (resourceId.name == DefaultNamespace || resourceId.name == "kube-system")
 }
 
 func (resourceId *KubeResourceId) GetCollection(restClient *rest_client.Client) rest_client.Collection {
