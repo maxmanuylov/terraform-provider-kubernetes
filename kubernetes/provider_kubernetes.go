@@ -3,6 +3,7 @@ package kubernetes
 import (
     "github.com/hashicorp/terraform/helper/schema"
     "github.com/hashicorp/terraform/terraform"
+    "github.com/maxmanuylov/terraform-provider-kubernetes/kubernetes/client"
 )
 
 func Provider() terraform.ResourceProvider {
@@ -55,6 +56,7 @@ func Provider() terraform.ResourceProvider {
                     "api_path": {
                         Type: schema.TypeString,
                         Optional: true,
+                        Default: kubernetes_client.DefaultApiPath,
                     },
                     "namespace": {
                         Type: schema.TypeString,

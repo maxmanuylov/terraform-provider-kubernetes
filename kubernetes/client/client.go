@@ -29,7 +29,7 @@ func (client *KubeClient) WaitForAPIServer() error {
     action := "connect to Kubernetes API server"
 
     eh := retryLong(action, nil, func() error {
-        _, err := client.restClient.Do("GET", "api/v1", rest_client.Json, nil)
+        _, err := client.restClient.Do("GET", DefaultApiPath, rest_client.Json, nil)
         return err
     })
 

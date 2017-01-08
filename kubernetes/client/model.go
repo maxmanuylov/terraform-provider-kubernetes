@@ -9,6 +9,7 @@ import (
 )
 
 const (
+    DefaultApiPath = "api/v1"
     namespacesCollection = "namespaces"
     defaultNamespace = "default"
 )
@@ -41,13 +42,8 @@ func GetKubeResourceId(resourceData *schema.ResourceData) *KubeResourceId {
         resourceNamespace = defaultNamespace
     }
 
-    resourceApiPath := strings.Trim(resourceData.Get("api_path").(string), "/")
-    if resourceApiPath == "" {
-        resourceApiPath = "api/v1"
-    }
-
     return &KubeResourceId{
-        apiPath: resourceApiPath,
+        apiPath: strings.Trim(resourceData.Get("api_path").(string), "/"),
         namespace: resourceNamespace,
         collection: resourceData.Get("collection").(string),
         name: resourceData.Get("name").(string),
