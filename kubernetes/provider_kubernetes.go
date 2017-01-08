@@ -12,46 +12,11 @@ func Provider() terraform.ResourceProvider {
 
         ResourcesMap: map[string]*schema.Resource{
 
-            "kubernetes_cluster": {
-                Schema: map[string]*schema.Schema{
-                    "api_server": {
-                        Type: schema.TypeString,
-                        Required: true,
-                    },
-                    "ca_cert": {
-                        Type: schema.TypeString,
-                        Optional: true,
-                        Sensitive: true,
-                    },
-                    "client_cert": {
-                        Type: schema.TypeString,
-                        Optional: true,
-                        Sensitive: true,
-                    },
-                    "client_key": {
-                        Type: schema.TypeString,
-                        Optional: true,
-                        Sensitive: true,
-                    },
-                    "cluster": {
-                        Type: schema.TypeString,
-                        Computed: true,
-                        Sensitive: true,
-                    },
-                },
-                Create: createKubernetesCluster,
-                Read:   readKubernetesCluster,
-                Update: updateKubernetesCluster,
-                Delete: deleteKubernetesCluster,
-                Exists: kubernetesClusterExists,
-            },
-
             "kubernetes_resource": {
                 Schema: map[string]*schema.Schema{
                     "cluster": {
                         Type: schema.TypeString,
                         Required: true,
-                        Sensitive: true,
                     },
                     "api_path": {
                         Type: schema.TypeString,
@@ -96,6 +61,43 @@ func Provider() terraform.ResourceProvider {
 
         },
 
+        DataSourcesMap: map[string]*schema.Resource{
+
+            "kubernetes_cluster": {
+                Schema: map[string]*schema.Schema{
+                    "name": {
+                        Type: schema.TypeString,
+                        Optional: true,
+                        Default: "default",
+                    },
+                    "api_server": {
+                        Type: schema.TypeString,
+                        Required: true,
+                    },
+                    "ca_cert": {
+                        Type: schema.TypeString,
+                        Optional: true,
+                        Sensitive: true,
+                    },
+                    "client_cert": {
+                        Type: schema.TypeString,
+                        Optional: true,
+                        Sensitive: true,
+                    },
+                    "client_key": {
+                        Type: schema.TypeString,
+                        Optional: true,
+                        Sensitive: true,
+                    },
+                    "cluster": {
+                        Type: schema.TypeString,
+                        Computed: true,
+                    },
+                },
+                Read:   createKubernetesCluster,
+            },
+
+        },
     }
 }
 

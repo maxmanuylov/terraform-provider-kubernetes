@@ -24,10 +24,6 @@ func GetOrCreateKubeClient(clusterKey string, clusterData *schema.ResourceData) 
     })
 }
 
-func DeleteKubeClient(clusterKey string) {
-    delete(registry, clusterKey)
-}
-
 func doGetOrCreateKubeClient(clusterKey string, factory func() (*KubeClient, error)) (*KubeClient, error) {
     client, ok := registry[clusterKey]
     if ok {
