@@ -16,12 +16,10 @@ func Provider() terraform.ResourceProvider {
                     "api_server": {
                         Type: schema.TypeString,
                         Required: true,
-                        ForceNew: true,
                     },
                     "ca_cert": {
                         Type: schema.TypeString,
                         Optional: true,
-                        ForceNew: true,
                         Sensitive: true,
                     },
                     "client_cert": {
@@ -52,7 +50,6 @@ func Provider() terraform.ResourceProvider {
                     "cluster": {
                         Type: schema.TypeString,
                         Required: true,
-                        ForceNew: true,
                         Sensitive: true,
                     },
                     "api_path": {
