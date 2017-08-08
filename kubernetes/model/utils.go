@@ -10,7 +10,7 @@ import (
 )
 
 type k8sEntity struct {
-    ApiVersion string
+    ApiVersion string `json:"apiVersion" yaml:"apiVersion"`
     Kind       string
     Metadata struct {
         Name      string
