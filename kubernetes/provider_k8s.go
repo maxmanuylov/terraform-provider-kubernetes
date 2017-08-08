@@ -12,7 +12,7 @@ func Provider() terraform.ResourceProvider {
 
         ResourcesMap: map[string]*schema.Resource{
 
-            "kubernetes_resource": {
+            "k8s_resource": {
                 Schema: map[string]*schema.Schema{
                     "cluster": {
                         Type: schema.TypeString,
@@ -64,7 +64,7 @@ func Provider() terraform.ResourceProvider {
 
         DataSourcesMap: map[string]*schema.Resource{
 
-            "kubernetes_cluster": {
+            "k8s_cluster": {
                 Schema: map[string]*schema.Schema{
                     "name": {
                         Type: schema.TypeString,
