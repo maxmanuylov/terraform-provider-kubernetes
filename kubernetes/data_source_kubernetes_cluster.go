@@ -4,6 +4,7 @@ import (
     "github.com/hashicorp/go-uuid"
     "github.com/hashicorp/terraform/helper/schema"
     "github.com/maxmanuylov/terraform-provider-kubernetes/kubernetes/client"
+    "github.com/maxmanuylov/terraform-provider-kubernetes/kubernetes/cluster"
 )
 
 func createKubernetesCluster(clusterData *schema.ResourceData, _ interface{}) error {
@@ -12,9 +13,9 @@ func createKubernetesCluster(clusterData *schema.ResourceData, _ interface{}) er
         return err
     }
 
-    name := clusterData.Get("name").(string)
+    cluster := kubernetes_cluster.New(clusterData)
 
-    client, err := kubernetes_client.GetOrCreateKubeClient(name, clusterData)
+    client, err := kubernetes_client.New(cluster)
     if err != nil {
         return err
     }
@@ -23,7 +24,12 @@ func createKubernetesCluster(clusterData *schema.ResourceData, _ interface{}) er
         return err
     }
 
-    clusterData.Set("cluster", name)
+    encodedCluster, err := cluster.Encode()
+    if err != nil {
+        return err
+    }
+
+    clusterData.Set("cluster", encodedCluster)
     clusterData.SetId(id)
 
     return nil

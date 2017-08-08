@@ -8,11 +8,10 @@ This is a plugin for HashiCorp [Terraform](https://terraform.io), which helps de
 - [Install](https://terraform.io/docs/plugins/basics.html) it, or put into a directory with configuration files.
 - Create a sample configuration file `example.tf`:
 ```
-data "kubernetes_cluster" "main" {
-  # Optional, must be unique for every cluster data source
-  name = "default"
+provider "k8s" {
+  # Either "k8s" provider or "k8s_cluster" data source should be configured
 
-  # Required, both HTTP and HTTPS are supported
+  # Kubernetes API server, both HTTP and HTTPS are supported
   api_server = "https://192.168.0.1:6443"
 
   # TLS options are optional, see "tls" Terraform provider (built-in) for certificates/keys generating
@@ -21,32 +20,27 @@ data "kubernetes_cluster" "main" {
   client_key = "<client private key content (PEM)>"
 }
 
-resource "kubernetes_resource" "mypod" {
-  # Required, must link on the corresponding "kubernetes_cluster" data source
-  cluster = "${data.kubernetes_cluster.main.cluster}"
+data "k8s_cluster" "main" {
+  # Either "k8s" provider or "k8s_cluster" data source should be configured
 
-  # Optional, default is "api/v1"
-  api_path = "api/v1"
+  # Kubernetes API server, both HTTP and HTTPS are supported
+  api_server = "https://192.168.0.1:6443"
 
-  # Optional, default is "default"
-  namespace = "default"
+  # TLS options are optional, see "tls" Terraform provider (built-in) for certificates/keys generating
+  ca_cert = "<CA certificate content (PEM)>"
+  client_cert = "<client certificate content (PEM)>"
+  client_key = "<client private key content (PEM)>"
+}
 
-  # Required
-  collection = "pods"
-  name = "mypod"
+resource "k8s_resource" "mypod" {
+  # Optional; if specified, must link on the corresponding "k8s_cluster" data source; otherwise provider configuration is used
+  cluster = "${data.k8s_cluster.main.cluster}"
 
-  # Optional
-  labels {
-    a = "b"
-  }
+  # Required; resource contents must be in JSON or YAML format
+  contents = "${file("mypod.yaml")}"
 
-  # Optional
-  annotations {
-    a = "b"
-  }
-
-  # Required, resource content must be in .yaml format and must NOT contain "apiVersion", "kind" and "metadata" sections
-  content = "${file("mypod.yaml")}"
+  # Optional; specifies "contents" format; possible values are "yaml" (default) and "json"
+  encoding = "yaml"
 }
 ```
 - Run:

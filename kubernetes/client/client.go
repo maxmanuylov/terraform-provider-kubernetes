@@ -4,9 +4,10 @@ import (
     "fmt"
     "github.com/maxmanuylov/go-rest/client"
     "github.com/maxmanuylov/go-rest/error"
-    "io"
+    "github.com/maxmanuylov/terraform-provider-kubernetes/kubernetes/cluster"
+    "github.com/maxmanuylov/terraform-provider-kubernetes/kubernetes/model"
     "net/http"
-    "os"
+    "strings"
     "time"
 )
 
@@ -19,16 +20,25 @@ type KubeClient struct {
     restClient *rest_client.Client
 }
 
-type errorHistory struct {
-    error   error
-    history []error
+func New(cluster *kubernetes_cluster.Cluster) (*KubeClient, error) {
+    transport, err := newTransport(cluster)
+    if err != nil {
+        return nil, err
+    }
+
+    return &KubeClient{
+        restClient: rest_client.New(strings.TrimSuffix(cluster.ApiServer, "/"), &http.Client{
+            Transport: transport,
+            Timeout:   10 * time.Second,
+        }),
+    }, nil
 }
 
 func (client *KubeClient) WaitForAPIServer() error {
     action := "connect to Kubernetes API server"
 
     eh := retryLong(action, nil, func() error {
-        _, err := client.restClient.Do("GET", DefaultApiPath, rest_client.Json, nil)
+        _, err := client.restClient.Do("GET", kubernetes_model.DefaultApiPath, rest_client.Json, nil)
         return err
     })
 
@@ -39,14 +49,12 @@ func (client *KubeClient) WaitForAPIServer() error {
     return eh.error
 }
 
-func (client *KubeClient) Create(resource *KubeResource) error {
-    collection := resource.GetCollection(client.restClient)
+func (client *KubeClient) Create(resource *kubernetes_model.KubeResource) error {
+    collection := client.restClient.Collection(resource.CollectionPath())
+    action := fmt.Sprintf("create %s", resource.Path())
 
-    action := fmt.Sprintf("create %s", resource.Describe())
-    content := resource.PrepareContent()
-
-    eh := retryLong(action, content, func() error {
-        _, err := collection.CreateYaml(content)
+    eh := retryLong(action, resource.Contents, func() error {
+        err := createResource(collection, resource.Encoding, resource.Contents)
         if err == http.ErrNoLocation {
             return nil
         }
@@ -54,62 +62,56 @@ func (client *KubeClient) Create(resource *KubeResource) error {
     })
 
     if eh.error == ErrConflict { // resource already exists
-        return client.doUpdate(resource, content)
+        return client.Update(resource)
     }
 
     if eh.error != nil {
-        dumpErrorsToFile(action, content, eh)
+        dumpErrorsToFile(action, resource.Contents, eh)
         return eh.error
     }
 
     return nil
 }
 
-func (client *KubeClient) Update(resource *KubeResource) error {
-    return client.doUpdate(resource, resource.PrepareContent())
-}
+func (client *KubeClient) Update(resource *kubernetes_model.KubeResource) error {
+    collection := client.restClient.Collection(resource.CollectionPath())
+    action := fmt.Sprintf("update %s", resource.Path())
 
-func (client *KubeClient) doUpdate(resource *KubeResource, content []byte) error {
-    collection := resource.GetCollection(client.restClient)
-    action := fmt.Sprintf("update %s", resource.Describe())
-
-    eh := retryLong(action, content, func() error {
-        return collection.ReplaceYaml(resource.Name(), content)
+    eh := retryLong(action, resource.Contents, func() error {
+        return updateResource(collection, resource.Name, resource.Encoding, resource.Contents)
     })
 
     if eh.error != nil {
-        dumpErrorsToFile(action, content, eh)
+        dumpErrorsToFile(action, resource.Contents, eh)
     }
 
     return eh.error
 }
 
-func (client *KubeClient) Exists(resourceId *KubeResourceId) (bool, error) {
-    collection := resourceId.GetCollection(client.restClient)
-    action := fmt.Sprintf("check existence of %s", resourceId.Describe())
+func (client *KubeClient) Exists(resourcePath *kubernetes_model.KubeResourcePath) (bool, error) {
+    collection := client.restClient.Collection(resourcePath.CollectionPath())
+    action := fmt.Sprintf("check existence of %s", resourcePath.Path())
 
+    exists := false
     eh := retryShort(action, nil, func() error {
-        _, err := collection.GetYaml(resourceId.Name())
+        var err error
+        exists, err = collection.Exists(resourcePath.Name)
         return err
     })
 
-    if eh.error == ErrNotFound {
-        return false, nil
-    }
-
-    return eh.error == nil, nil
+    return exists, eh.error
 }
 
-func (client *KubeClient) Delete(resourceId *KubeResourceId) error {
-    if resourceId.CannotBeDeleted() {
+func (client *KubeClient) Delete(resourcePath *kubernetes_model.KubeResourcePath) error {
+    if resourcePath.CannotBeDeleted() {
         return nil
     }
 
-    collection := resourceId.GetCollection(client.restClient)
-    action := fmt.Sprintf("delete %s", resourceId.Describe())
+    collection := client.restClient.Collection(resourcePath.CollectionPath())
+    action := fmt.Sprintf("delete %s", resourcePath.Path())
 
     eh := retryShort(action, nil, func() error {
-        return collection.Delete(resourceId.Name())
+        return collection.Delete(resourcePath.Name)
     })
 
     if eh.error == ErrNotFound {
@@ -121,98 +123,4 @@ func (client *KubeClient) Delete(resourceId *KubeResourceId) error {
     }
 
     return eh.error
-}
-
-func retryLong(action string, content []byte, do func() error) *errorHistory {
-    return retry(200, action, content, do) // 10 minutes
-}
-
-func retryShort(action string, content []byte, do func() error) *errorHistory {
-    return retry(3, action, content, do) // 3 times
-}
-
-func retry(n int, action string, content []byte, do func() error) *errorHistory {
-    eh := &errorHistory{
-        history: make([]error, 0),
-    }
-
-    var done bool
-
-    for i := 0; i < n; i++ {
-        if i != 0 {
-            time.Sleep(3 * time.Second)
-        }
-
-        done, eh.error = try(do)
-        if eh.error != nil {
-            eh.history = append(eh.history, eh.error)
-        }
-
-        if done {
-            return eh
-        }
-
-        if eh.error != nil {
-            dumpErrors(os.Stderr, action, content, eh.error)
-        }
-    }
-
-    return eh
-}
-
-func try(do func() error) (bool, error) {
-    err := do()
-    if err == nil {
-        return true, nil
-    }
-
-    restErr, ok := err.(*rest_error.Error)
-    if !ok {
-        return false, err
-    }
-
-    if restErr.IsClientError() {
-        if restErr.Code == http.StatusNotFound {
-            return true, ErrNotFound
-        }
-        if restErr.Code == http.StatusConflict {
-            return true, ErrConflict
-        }
-        if restErr.Code == http.StatusForbidden { // Illegal Kubernetes state, need to retry
-            return false, restErr
-        }
-        return true, restErr
-    }
-
-    return false, restErr
-}
-
-func dumpErrorsToFile(action string, content []byte, eh *errorHistory) {
-    file, err := os.Create("kubernetes-error.log")
-    if err != nil {
-        return
-    }
-
-    defer file.Close()
-    defer file.Sync()
-
-    fmt.Fprintf(file, "%s\n\n", time.Now().String())
-
-    dumpErrors(file, action, content, eh.history...)
-}
-
-func dumpErrors(writer io.Writer, action string, content []byte, errors... error) {
-    fmt.Fprintf(writer, "Failed to %s\n\n", action)
-
-    for _, err := range errors {
-        fmt.Fprintln(writer, "=================================================================")
-        fmt.Fprintf(writer, "\n%v\n\n", err)
-    }
-
-    if content != nil {
-        fmt.Fprintln(writer, "=============")
-        fmt.Fprintln(writer, "== Content ==")
-        fmt.Fprintln(writer, "=============")
-        fmt.Fprintf(writer, "\n%s\n\n", content)
-    }
 }
