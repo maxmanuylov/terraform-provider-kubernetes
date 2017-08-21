@@ -20,8 +20,10 @@ func createKubernetesCluster(clusterData *schema.ResourceData, _ interface{}) er
         return err
     }
 
-    if err = client.WaitForAPIServer(); err != nil {
-        return err
+    if clusterData.IsNewResource() {
+        if err = client.WaitForAPIServer(); err != nil {
+            return err
+        }
     }
 
     encodedCluster, err := cluster.Encode()
