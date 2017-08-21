@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="v1.3"
+VERSION="v1.3.1"
 
 govendor sync
 
