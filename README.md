@@ -9,7 +9,7 @@ This is a plugin for HashiCorp [Terraform](https://terraform.io), which helps de
 - Create a sample configuration file `example.tf`:
 ```
 provider "k8s" {
-  # Either "k8s" provider or "k8s_cluster" data source should be configured
+  # Either "k8s" provider or "k8s_cluster" resource should be configured
 
   # Kubernetes API server, both HTTP and HTTPS are supported
   api_server = "https://192.168.0.1:6443"
@@ -20,8 +20,8 @@ provider "k8s" {
   client_key = "<client private key content (PEM)>"
 }
 
-data "k8s_cluster" "main" {
-  # Either "k8s" provider or "k8s_cluster" data source should be configured
+resource "k8s_cluster" "main" {
+  # Either "k8s" provider or "k8s_cluster" resource should be configured
 
   # Kubernetes API server, both HTTP and HTTPS are supported
   api_server = "https://192.168.0.1:6443"
@@ -33,8 +33,8 @@ data "k8s_cluster" "main" {
 }
 
 resource "k8s_resource" "mypod" {
-  # Optional; if specified, must link on the corresponding "k8s_cluster" data source; otherwise provider configuration is used
-  cluster = "${data.k8s_cluster.main.cluster}"
+  # Optional; if specified, must link on the corresponding "k8s_cluster" resource; otherwise provider configuration is used
+  cluster = "${k8s_cluster.main.cluster}"
 
   # Required; resource contents must be in JSON or YAML format
   contents = "${file("mypod.yaml")}"
