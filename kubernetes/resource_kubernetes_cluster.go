@@ -20,19 +20,41 @@ func createKubernetesCluster(clusterData *schema.ResourceData, _ interface{}) er
         return err
     }
 
-    if clusterData.IsNewResource() {
-        if err = client.WaitForAPIServer(); err != nil {
-            return err
-        }
+    if err = client.WaitForAPIServer(); err != nil {
+        return err
     }
 
+    if err := updateCluster(clusterData, cluster); err != nil {
+        return err
+    }
+
+    clusterData.SetId(id)
+
+    return nil
+}
+
+func readKubernetesCluster(_ *schema.ResourceData, _ interface{}) error {
+    return nil
+}
+
+func updateKubernetesCluster(clusterData *schema.ResourceData, _ interface{}) error {
+    return updateCluster(clusterData, kubernetes_cluster.New(clusterData))
+}
+
+func deleteKubernetesCluster(clusterData *schema.ResourceData, _ interface{}) error {
+    clusterData.SetId("")
+    clusterData.Set("cluster", "")
+
+    return nil
+}
+
+func updateCluster(clusterData *schema.ResourceData, cluster *kubernetes_cluster.Cluster) error {
     encodedCluster, err := cluster.Encode()
     if err != nil {
         return err
     }
 
     clusterData.Set("cluster", encodedCluster)
-    clusterData.SetId(id)
 
     return nil
 }

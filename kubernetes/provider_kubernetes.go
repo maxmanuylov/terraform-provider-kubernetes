@@ -15,6 +15,14 @@ func Provider() terraform.ResourceProvider {
         ConfigureFunc: configureKubernetesProvider,
 
         ResourcesMap: map[string]*schema.Resource{
+            "k8s_cluster": {
+                Schema: clusterSchema(true),
+                Create: createKubernetesCluster,
+                Read:   readKubernetesCluster,
+                Update: updateKubernetesCluster,
+                Delete: deleteKubernetesCluster,
+            },
+
             "k8s_resource": {
                 Schema: map[string]*schema.Schema{
                     "cluster": {
@@ -43,13 +51,6 @@ func Provider() terraform.ResourceProvider {
                 Update: updateKubernetesResource,
                 Delete: deleteKubernetesResource,
                 Exists: kubernetesResourceExists,
-            },
-        },
-
-        DataSourcesMap: map[string]*schema.Resource{
-            "k8s_cluster": {
-                Schema: clusterSchema(true),
-                Read:   createKubernetesCluster,
             },
         },
     }
