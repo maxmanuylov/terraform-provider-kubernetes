@@ -31,7 +31,7 @@ func (resourcePath *KubeResourcePath) IsNamespace() bool {
 }
 
 func (resourcePath *KubeResourcePath) CannotBeDeleted() bool {
-    return resourcePath.IsNamespace() && (resourcePath.Name == DefaultNamespace || resourcePath.Name == "kube-system")
+    return resourcePath.IsNamespace() && (resourcePath.Name == DefaultNamespace || resourcePath.Name == "kube-system" || resourcePath.Name == "kube-public")
 }
 
 func (resourcePath *KubeResourcePath) CollectionPath() string {
