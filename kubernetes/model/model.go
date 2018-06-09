@@ -26,6 +26,10 @@ type KubeResource struct {
     Encoding string
 }
 
+func (resourcePath *KubeResourcePath) IsGlobal() bool {
+    return resourcePath.Namespace == ""
+}
+
 func (resourcePath *KubeResourcePath) IsNamespace() bool {
     return resourcePath.Collection == namespacesCollection
 }
@@ -35,8 +39,8 @@ func (resourcePath *KubeResourcePath) CannotBeDeleted() bool {
 }
 
 func (resourcePath *KubeResourcePath) CollectionPath() string {
-    if resourcePath.IsNamespace() {
-        return fmt.Sprintf("%s/%s", resourcePath.ApiPath, namespacesCollection)
+    if resourcePath.IsGlobal() {
+        return fmt.Sprintf("%s/%s", resourcePath.ApiPath, resourcePath.Collection)
     }
     return fmt.Sprintf("%s/%s/%s/%s", resourcePath.ApiPath, namespacesCollection, resourcePath.Namespace, resourcePath.Collection)
 }

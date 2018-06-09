@@ -25,16 +25,26 @@ func (e *k8sEntity) GetApiPath() string {
     return fmt.Sprintf("apis/%s", strings.Trim(e.ApiVersion, "/"))
 }
 
-func (e *k8sEntity) GetNamespace() string {
+func (e *k8sEntity) IsNamespace() bool {
+    return strings.ToLower(e.Kind) == "namespace"
+}
+
+func (e *k8sEntity) GetNamespace(global bool) string {
+    if global || e.IsNamespace() {
+        return ""
+    }
+
     if e.Metadata.Namespace == "" {
         return DefaultNamespace
     }
+    
     return e.Metadata.Namespace
 }
 
 func ParseResource(resourceData *schema.ResourceData) (*KubeResource, error) {
     contents := []byte(resourceData.Get("contents").(string))
     encoding := resourceData.Get("encoding").(string)
+    global := resourceData.Get("global").(bool)
 
     entity := &k8sEntity{}
     if encoding == EncodingJson {
@@ -58,7 +68,7 @@ func ParseResource(resourceData *schema.ResourceData) (*KubeResource, error) {
     return &KubeResource{
         KubeResourcePath: &KubeResourcePath{
             ApiPath:    entity.GetApiPath(),
-            Namespace:  entity.GetNamespace(),
+            Namespace:  entity.GetNamespace(global),
             Collection: fmt.Sprintf("%ss", strings.ToLower(entity.Kind)),
             Name:       entity.Metadata.Name,
         },
@@ -74,18 +84,27 @@ func ParsePath(path string) *KubeResourcePath {
     if collectionName == namespacesCollection {
         return &KubeResourcePath{
             ApiPath:    restPath,
-            Namespace:  DefaultNamespace,
+            Namespace:  "",
             Collection: namespacesCollection,
             Name:       resourceName,
         }
     }
 
-    namespaceName, namespaceCollectionPath := splitOne(restPath)
-    _, apiPath := splitOne(namespaceCollectionPath)
+    namespaceName, namespacesCollectionPath := splitOne(restPath)
+    namespacesCollectionName, apiPath := splitOne(namespacesCollectionPath)
+
+    if namespacesCollectionName == namespacesCollection {
+        return &KubeResourcePath{
+            ApiPath:    apiPath,
+            Namespace:  namespaceName,
+            Collection: collectionName,
+            Name:       resourceName,
+        }
+    }
 
     return &KubeResourcePath{
-        ApiPath:    apiPath,
-        Namespace:  namespaceName,
+        ApiPath:    restPath,
+        Namespace:  "",
         Collection: collectionName,
         Name:       resourceName,
     }

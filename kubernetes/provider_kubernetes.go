@@ -41,6 +41,11 @@ func Provider() terraform.ResourceProvider {
                         Default:      kubernetes_model.EncodingYaml,
                         ValidateFunc: validateResourceEncoding,
                     },
+                    "global": {
+                        Type:     schema.TypeBool,
+                        Optional: true,
+                        Default:  false,
+                    },
                     "path": {
                         Type:     schema.TypeString,
                         Computed: true,
