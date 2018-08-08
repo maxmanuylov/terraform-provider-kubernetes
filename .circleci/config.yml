@@ -1,0 +1,9 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.9
+    working_directory: /go/src/github.com/maxmanuylov/terraform-provider-kubernetes
+    steps:
+      - checkout
+      - run: /bin/sh ./build.sh
