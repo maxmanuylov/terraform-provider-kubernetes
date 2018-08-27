@@ -41,6 +41,14 @@ func (e *k8sEntity) GetNamespace(global bool) string {
     return e.Metadata.Namespace
 }
 
+func (e *k8sEntity) GetCollection() string {
+    lowerKind := strings.ToLower(e.Kind)
+    if strings.HasSuffix(lowerKind, "s") {
+        return fmt.Sprintf("%ses", lowerKind)
+    }
+    return fmt.Sprintf("%ss", lowerKind)
+}
+
 func ParseResource(resourceData *schema.ResourceData) (*KubeResource, error) {
     contents := []byte(resourceData.Get("contents").(string))
     encoding := resourceData.Get("encoding").(string)
@@ -69,7 +77,7 @@ func ParseResource(resourceData *schema.ResourceData) (*KubeResource, error) {
         KubeResourcePath: &KubeResourcePath{
             ApiPath:    entity.GetApiPath(),
             Namespace:  entity.GetNamespace(global),
-            Collection: fmt.Sprintf("%ss", strings.ToLower(entity.Kind)),
+            Collection: entity.GetCollection(),
             Name:       entity.Metadata.Name,
         },
         Contents: contents,
