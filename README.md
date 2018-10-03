@@ -7,7 +7,7 @@ This is a plugin for HashiCorp [Terraform](https://terraform.io), which helps de
 - Download the plugin from [Releases](https://github.com/maxmanuylov/terraform-provider-kubernetes/releases) page.
 - [Install](https://terraform.io/docs/plugins/basics.html) it, or put into a directory with configuration files.
 - Create a sample configuration file `example.tf`:
-```
+```hcl
 provider "k8s" {
   # Either "k8s" provider or "k8s_cluster" resource should be configured
 
